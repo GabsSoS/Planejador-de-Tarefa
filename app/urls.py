@@ -16,10 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from tarefas.views import TaskCreateListView
+from tarefas.views import TaskCreateListView, RegisterView, LoginView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('task-create/', TaskCreateListView.as_view(), name='list-task')
+    path('task-create/', TaskCreateListView.as_view(), name='list-task'),
+    path("register/", RegisterView, name="register"),
+    path("login/", LoginView, name="login"),
+
+
     
 ]

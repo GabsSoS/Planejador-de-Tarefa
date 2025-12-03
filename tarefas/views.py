@@ -1,47 +1,36 @@
-from rest_framework import generics
-from tarefas.models import Task
-from tarefas.serializers import TaskSerializaer
-from django.contrib.auth.models import User
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+
 from django.contrib.auth import authenticate, login
+from rest_framework import generics
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from tarefas.models import Task
+from tarefas.serializers.SRTask import TaskSerializaer
+from tarefas.serializers.SRUser import RegisterSerializer
 from django.views.decorators.csrf import csrf_exempt
 
-
-import json
-
 @csrf_exempt
-def registrar_usuario(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
+class RegisterView(APIView):
 
-        username = data.get("username")
-        password = data.get("password")
-        email = data.get("email")
-
-        if User.objects.filter(username=username).exists():
-            return JsonResponse({"error": "Usuário já existe"}, status=400)
-
-        user = User.objects.create_user(username=username, password=password, email=email)
-        return JsonResponse({"message": "Usuário criado com sucesso", "id": user.id})
-    return JsonResponse({"error": "Método não permitido"}, status=405)
-
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Usuário registrado com sucesso"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 @csrf_exempt
-def login_usuario(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
+class LoginView(APIView):
 
-        username = data.get("username")
-        password = data.get("password")
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
 
-        user = authenticate(request, username=username, password=password)
-
+        user = authenticate(username=username, password=password)
         if user is not None:
-            login(request, user)
-            return JsonResponse({"message": "Login realizado com sucesso"})
-        else:
-            return JsonResponse({"error": "Credenciais inválidas"}, status=400)
-    return JsonResponse({"error": "Método não permitido"}, status=405)
+            login(request, user)  # cria sessão
+            return Response({"message": "Login realizado com sucesso"}, status=status.HTTP_200_OK)
+        return Response({"error": "Credenciais inválidas"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class TaskCreateListView(generics.ListCreateAPIView):
